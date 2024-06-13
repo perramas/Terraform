@@ -1,0 +1,92 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+trigger:
+- master
+
+pool: default
+ # vmImage: ubuntu-latest
+stages:
+  - stage: tfvalide
+    jobs: 
+      - job: validate 
+        steps:
+        - task: TerraformInstaller@1
+          inputs:
+            terraformVersion: 'latest'
+        - task: TerraformTaskV4@4
+          inputs:
+            provider: 'azurerm'
+            command: 'init'
+            backendServiceArm: 'Perna'
+            backendAzureRmResourceGroupName: 'Agent'
+            backendAzureRmStorageAccountName: 'agentperna'
+            backendAzureRmContainerName: 'tfstate'
+            backendAzureRmKey: 'tfstate'
+        - task: TerraformTaskV4@4
+          inputs:
+            provider: 'azurerm'
+            command: 'validate'
+
+  - stage: tfplan
+    jobs: 
+      - job: plan
+        steps:
+          - task: TerraformInstaller@1
+            displayName: Installing Terrafor
+            inputs:
+              terraformVersion: 'latest'
+          - task: TerraformTaskV4@4
+            displayName: Terraform init
+            inputs:
+              provider: 'azurerm'
+              command: 'init'
+              backendServiceArm: 'Perna'
+              backendAzureRmResourceGroupName: 'Agent'
+              backendAzureRmStorageAccountName: 'agentperna'
+              backendAzureRmContainerName: 'tfstate'
+              backendAzureRmKey: 'tfstate'
+          - task: TerraformTaskV4@4
+            displayName: Terraform Plan
+            inputs:
+              provider: 'azurerm'
+              command: 'plan'
+              environmentServiceNameAzureRM: 'Perna'
+
+  - stage: tfapproval
+    jobs: 
+      - job: approval
+        pool: server
+        timeoutInMinutes: 1
+        steps:
+          - task: ManualValidation@1
+            inputs:
+              notifyUsers: '123.perna@gmail.com'
+              instructions: 'Approve this Job'
+            
+  - stage: tfapply
+    jobs: 
+      - job: apply
+        steps:
+          - task: TerraformInstaller@1
+            displayName: Installing Terrafor
+            inputs:
+              terraformVersion: 'latest'
+          - task: TerraformTaskV4@4
+            displayName: Terraform init
+            inputs:
+              provider: 'azurerm'
+              command: 'init'
+              backendServiceArm: 'Perna'
+              backendAzureRmResourceGroupName: 'Agent'
+              backendAzureRmStorageAccountName: 'agentperna'
+              backendAzureRmContainerName: 'tfstate'
+              backendAzureRmKey: 'tfstate'
+          - task: TerraformTaskV4@4
+            displayName: Landed in Moon
+            inputs:
+              provider: 'azurerm'
+              command: 'apply'
+              environmentServiceNameAzureRM: 'Perna'
